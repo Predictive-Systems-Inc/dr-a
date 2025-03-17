@@ -109,10 +109,18 @@ export default function Home() {
     setMessages(prev => prev.sort((a, b) => a.date.getTime() - b.date.getTime()));
   }, []);
 
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
+      console.log('Gemini API key is loaded', process.env.NEXT_PUBLIC_GEMINI_API_KEY);
+    } else {
+      console.log('Gemini API key is missing');
+    }
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen">
       <h1 className="text-4xl font-bold text-zinc-800 p-8 pb-0">
-       AI Assessment and Tutor
+        Let's Review Freefall and Projectile Motion
       </h1>
       
       {/* Main content area with responsive layout */}
