@@ -97,7 +97,7 @@ export default function Home() {
     
     // Update previous state for next comparison
     previousStreamingState.current = isCameraStreaming;
-  }, [isCameraStreaming, messages]);
+  }, [isCameraStreaming, messages, db]);
   
   useEffect(() => {
     scrollToBottom();
@@ -120,7 +120,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <h1 className="text-4xl font-bold text-zinc-800 p-8 pb-0">
-        Let's Review Freefall and Projectile Motion
+        Let&apos;s Review Freefall and Projectile Motion
       </h1>
       
       {/* Main content area with responsive layout */}
@@ -136,7 +136,7 @@ export default function Home() {
           <ScrollArea ref={scrollAreaRef} className="h-[300px] md:h-[540px] p-6">
             <div className="space-y-6">
               <GeminiMessage 
-                text="Hi! I&apos;m Teacher. A. Are you ready to review on freefall and projectile motion? Please click on the green Camera button to begin." 
+                text="Hi! I&apos;m Teacher A. Are you ready to review on freefall and projectile motion? Please click on the green Camera button to begin." 
                 date={new Date()} 
               />
               {messages.map((message, index) => (
