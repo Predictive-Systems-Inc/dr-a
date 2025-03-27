@@ -6,6 +6,65 @@ const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 const HOST = "generativelanguage.googleapis.com";
 const WS_URL = `wss://${HOST}/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${API_KEY}`;
 
+const TOPIC_INSTRUCTIONS = {
+  "Displacement and Velocity": {
+    parts: [
+      { text: "You are Teacher A, a teacher that reviews students on the concepts of displacement and velocity." },
+      { text: "You will ask series of questions to assess the student's understanding of these concepts." },
+      { text: "Make sure to ask follow up questions to clarify the student's response and get sufficient information to assess their understanding." },
+      { text: "Cover the following topics: distance vs displacement, speed vs velocity, vector quantities, and graphical analysis of motion." },
+      { text: "You speak in English or Tagalog to make student comfortable depending on their response." },
+    ]
+  },
+  "Soccer": {
+    parts: [
+      { text: "You are Teacher A, a teacher that reviews students on projectile motion using soccer scenarios." },
+      { text: "You will ask series of questions to assess the student's understanding of projectile motion in soccer." },
+      { text: "Use this figure to help you explain the problem and given scenario: " },
+      { text: "The soccer player kicks the ball in the Figure above with an initial velocity of 35 m/s at an angle of 20⁰. (a) Calculate for the time when it reaches 0.40 m. (b) Find its position parallel to the field at height equal to 0.40 m. (c) Find the time when it reaches its highest point. (d) At what point is the ball at its highest and farthest?" },
+      { text: "Make sure to ask follow up questions about the soccer ball's trajectory, time of flight, and maximum height." },
+      { text: "Cover the following topics: initial velocity, launch angle, time to reach specific heights, maximum height, and horizontal distance." },
+      { text: "You speak in English or Tagalog to make student comfortable depending on their response." },      
+    ]
+  },
+  "Acceleration": {
+    parts: [
+      { text: "You are Teacher A, a teacher that reviews students on the concept of acceleration." },
+      { text: "You will ask series of questions to assess the student's understanding of acceleration." },
+      { text: "Make sure to ask follow up questions about acceleration in different scenarios: speeding up, slowing down, and changing direction." },
+      { text: "Cover the following topics: definition of acceleration, units of measurement, acceleration due to gravity, and acceleration in everyday situations." },
+      { text: "You speak in English or Tagalog to make student comfortable depending on their response." },
+    ]
+  },
+  "Newton's Laws of Motion": {
+    parts: [
+      { text: "You are Teacher A, a teacher that reviews students on Newton's Laws of Motion." },
+      { text: "You will ask series of questions to assess the student's understanding of all three laws." },
+      { text: "Make sure to ask follow up questions about real-world applications of each law." },
+      { text: "Cover the following topics: inertia, force and acceleration relationships, action-reaction pairs." },
+      { text: "You speak in English or Tagalog to make student comfortable depending on their response." },
+    ]
+  },
+  "Freefall and Projectile Motion": {
+    parts: [
+      { text: "You are Teacher A, a teacher that reviews students on the concepts of freefall and projectile motion." },
+      { text: "You will ask series of questions to assess the student's understanding of these concepts." },
+      { text: "Make sure to ask follow up questions to clarify the student's response and get sufficient information to assess their understanding." },
+      { text: "Cover the following topics: freefall, projectile motion, and the effect of gravity on moving objects." },
+      { text: "You speak in English or Tagalog to make student comfortable depending on their response." },
+    ]
+  },
+  "Circular Motion": {
+    parts: [
+      { text: "You are Teacher A, a teacher that reviews students on circular motion." },
+      { text: "You will ask series of questions to assess the student's understanding of objects moving in circles." },
+      { text: "Make sure to ask follow up questions about centripetal force, angular velocity, and period of rotation." },
+      { text: "Cover the following topics: uniform circular motion, centripetal acceleration, and real-world applications." },
+      { text: "You speak in English or Tagalog to make student comfortable depending on their response." },
+    ]
+  }
+} as const;
+
 export class GeminiWebSocket {
   private ws: WebSocket | null = null;
   private isConnected: boolean = false;
@@ -24,13 +83,15 @@ export class GeminiWebSocket {
   private onTranscriptionCallback: ((text: string, date: Date, isHuman: boolean) => void) | null = null;
   private transcriptionService: TranscriptionService;
   private accumulatedPcmData: string[] = [];
+  private currentTopic: keyof typeof TOPIC_INSTRUCTIONS = "Freefall and Projectile Motion";
 
   constructor(
     onMessage: (text: string) => void,
     onSetupComplete: () => void,
     onPlayingStateChange: (isPlaying: boolean) => void,
     onAudioLevelChange: (level: number) => void,
-    onTranscription: (text: string, date: Date, isHuman: boolean) => void
+    onTranscription: (text: string, date: Date, isHuman: boolean) => void,
+    initialTopic: keyof typeof TOPIC_INSTRUCTIONS = "Freefall and Projectile Motion"
   ) {
     this.onMessageCallback = onMessage;
     this.onSetupCompleteCallback = onSetupComplete;
@@ -42,49 +103,62 @@ export class GeminiWebSocket {
       sampleRate: 24000  // Match the response audio rate
     });
     this.transcriptionService = new TranscriptionService();
+    this.currentTopic = initialTopic;
   }
 
   connect() {
-    if (this.ws?.readyState === WebSocket.OPEN) {
+    // Prevent multiple connections
+    if (this.ws?.readyState === WebSocket.CONNECTING || 
+        this.ws?.readyState === WebSocket.OPEN) {
       return;
     }
 
-    this.ws = new WebSocket(WS_URL);
+    try {
+      this.ws = new WebSocket(WS_URL);
 
-    this.ws.onopen = () => {
-      this.isConnected = true;
-      this.sendInitialSetup();
-    };
+      this.ws.onopen = () => {
+        this.isConnected = true;
+        this.sendInitialSetup();
+      };
 
-    this.ws.onmessage = async (event) => {
-      try {
-        let messageText: string;
-        if (event.data instanceof Blob) {
-          const arrayBuffer = await event.data.arrayBuffer();
-          const bytes = new Uint8Array(arrayBuffer);
-          messageText = new TextDecoder('utf-8').decode(bytes);
-        } else {
-          messageText = event.data;
+      this.ws.onmessage = async (event) => {
+        try {
+          let messageText: string;
+          if (event.data instanceof Blob) {
+            const arrayBuffer = await event.data.arrayBuffer();
+            const bytes = new Uint8Array(arrayBuffer);
+            messageText = new TextDecoder('utf-8').decode(bytes);
+          } else {
+            messageText = event.data;
+          }
+
+          await this.handleMessage(messageText);
+        } catch (error) {
+          console.error("[WebSocket] Error processing message:", error);
         }
+      };
 
-        await this.handleMessage(messageText);
-      } catch (error) {
-        console.error("[WebSocket] Error processing message:", error);
-      }
-    };
+      this.ws.onerror = (error) => {
+        console.error("[WebSocket] Error:", error);
+      };
 
-    this.ws.onerror = (error) => {
-      console.error("[WebSocket] Error:", error);
-    };
+      this.ws.onclose = (event) => {
+        this.isConnected = false;
 
-    this.ws.onclose = (event) => {
-      this.isConnected = false;
-
-      // Only attempt to reconnect if we haven't explicitly called disconnect
-      if (!event.wasClean && this.isSetupComplete) {
-        setTimeout(() => this.connect(), 1000);
-      }
-    };
+        // Only attempt to reconnect if we haven't explicitly called disconnect
+        if (!event.wasClean && this.isSetupComplete) {
+          setTimeout(() => this.connect(), 1000);
+        }
+      };
+    } catch (error) {
+      console.error("[WebSocket] Connection error:", error);
+      // Add retry logic
+      setTimeout(() => {
+        if (!this.isConnected) {
+          this.connect();
+        }
+      }, 2000);
+    }
   }
 
   private sendInitialSetup() {
@@ -101,25 +175,17 @@ export class GeminiWebSocket {
             }
           },
           temperature: 0.01,
-          max_output_tokens: 120,
+          max_output_tokens: 300,
         },
         system_instruction: {
-          parts: [
-            { text: "You are Dr. A, a teacher that reviews student on the concepts of freefall and projectile motion." },
-            { text: "You will ask series of questions to assess the student's understanding of the concepts." },
-            { text: "Make sure to ask follow up questions to clarify the student's response and get sufficient information to assess the student's understanding." },
-            { text: "Cover the following topics: freefall, projectile motion, and Newton's laws of motion." },
-            { text: "You speak in English or Tagalog to make student comfortable depending on their response." },
-          ],
+          parts: TOPIC_INSTRUCTIONS[this.currentTopic].parts,
         },
       },
     };
+    console.log('currentTopic', this.currentTopic);
     console.log("[Setup Message]:", setupMessage);
     this.ws?.send(JSON.stringify(setupMessage));
   }
-  /*
-    
-  */
 
   sendMediaChunk(b64Data: string, mimeType: string) {
     if (!this.isConnected || !this.ws || !this.isSetupComplete) return;
@@ -289,11 +355,38 @@ export class GeminiWebSocket {
 
   disconnect() {
     this.isSetupComplete = false;
+    this.isConnected = false; // Set this first
+    
     if (this.ws) {
-      this.ws.close(1000, "Intentional disconnect");
+      try {
+        this.ws.close(1000, "Intentional disconnect");
+      } catch (error) {
+        console.warn("[WebSocket] Error during disconnect:", error);
+      }
       this.ws = null;
     }
-    this.isConnected = false;
+    
     this.accumulatedPcmData = [];
+    this.stopCurrentAudio();
+  }
+
+  setTopic(topic: keyof typeof TOPIC_INSTRUCTIONS) {
+    this.currentTopic = topic;
+    
+    // Clean up existing connection
+    if (this.ws) {
+      this.stopCurrentAudio(); // Stop any playing audio
+      this.audioQueue = []; // Clear audio queue
+      this.accumulatedPcmData = []; // Clear accumulated data
+      
+      // Only disconnect and reconnect if currently connected
+      if (this.isConnected) {
+        this.disconnect();
+        // Add a small delay before reconnecting to ensure clean disconnect
+        setTimeout(() => {
+          this.connect();
+        }, 500);
+      }
+    }
   }
 } 

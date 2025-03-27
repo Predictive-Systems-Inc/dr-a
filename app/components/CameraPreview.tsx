@@ -12,12 +12,14 @@ interface CameraPreviewProps {
   onTranscription: (text: string, date: Date, isHuman: boolean) => void;
   onStreamingStateChange: (isStreaming: boolean) => void;
   className?: string;
+  topic: string;
 }
 
 export default function CameraPreview({ 
       onTranscription, 
       onStreamingStateChange,
-      className = '' }: CameraPreviewProps) {
+      className = '',
+      topic }: CameraPreviewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -257,7 +259,8 @@ export default function CameraPreview({
       (level) => {
         setOutputAudioLevel(level);
       },
-      onTranscription
+      onTranscription,
+      topic
     );
     geminiWsRef.current.connect();
 
@@ -270,7 +273,7 @@ export default function CameraPreview({
       setIsWebSocketReady(false);
       setConnectionStatus('disconnected');
     };
-  }, [isStreaming, onTranscription, cleanupWebSocket]);
+  }, [isStreaming, onTranscription, cleanupWebSocket, topic]);
 
   // Start image capture only after WebSocket is ready
   useEffect(() => {
