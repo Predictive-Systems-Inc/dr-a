@@ -260,7 +260,7 @@ export default function CameraPreview({
         setOutputAudioLevel(level);
       },
       onTranscription,
-      topic
+      topic 
     );
     geminiWsRef.current.connect();
 

@@ -230,7 +230,7 @@ export default function Home() {
       handlePlayingStateChange,
       handleAudioLevelChange,
       handleTranscription,
-      activeTopic as "Displacement and Velocity" | "Soccer" | "Acceleration" | "Newton's Laws of Motion" | "Freefall and Projectile Motion" | "Circular Motion"
+      activeTopic 
     );
     webSocketRef.current.connect();
 
