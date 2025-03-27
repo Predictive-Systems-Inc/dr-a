@@ -270,10 +270,11 @@ export default function CameraPreview({
         imageIntervalRef.current = null;
       }
       cleanupWebSocket();
+      cleanupAudio();
       setIsWebSocketReady(false);
       setConnectionStatus('disconnected');
     };
-  }, [isStreaming, onTranscription, cleanupWebSocket, topic]);
+  }, [isStreaming, onTranscription, cleanupWebSocket, cleanupAudio, topic, isAudioSetup, sendAudioData]);
 
   // Start image capture only after WebSocket is ready
   useEffect(() => {

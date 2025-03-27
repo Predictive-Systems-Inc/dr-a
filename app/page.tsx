@@ -8,7 +8,8 @@ import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import { initializeApp } from 'firebase/app';
 import { Button } from "@/components/ui/button";
 import { GeminiWebSocket } from './services/geminiWebSocket';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 
 // First, make sure Firebase is initialized
 const firebaseConfig = {
@@ -126,8 +127,14 @@ const GeminiMessage = ({ text, date, imageUrl }: { text: string, date?: Date, im
       <div className="rounded-lg bg-white border border-zinc-200 px-3 py-2 text-sm text-zinc-800">
         {text}
         {imageUrl && (
-          <div className="mt-4">
-            <img src={imageUrl} alt="Soccer scenario" className="rounded-lg max-w-full h-auto" />
+          <div className="mt-4 relative w-full h-[200px]">
+            <Image 
+              src={imageUrl} 
+              alt="Soccer scenario" 
+              fill
+              className="rounded-lg object-contain"
+              priority
+            />
           </div>
         )}
       </div>
@@ -136,7 +143,6 @@ const GeminiMessage = ({ text, date, imageUrl }: { text: string, date?: Date, im
 );
 
 export default function Home() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   
   // Get topic from URL or default to "Freefall and Projectile Motion"
@@ -224,7 +230,7 @@ export default function Home() {
       handlePlayingStateChange,
       handleAudioLevelChange,
       handleTranscription,
-      activeTopic // Pass the current topic
+      activeTopic as "Displacement and Velocity" | "Soccer" | "Acceleration" | "Newton's Laws of Motion" | "Freefall and Projectile Motion" | "Circular Motion"
     );
     webSocketRef.current.connect();
 
