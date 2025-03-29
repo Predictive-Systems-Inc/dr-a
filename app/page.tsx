@@ -283,7 +283,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <h1 className="text-4xl font-bold text-zinc-800 p-8 pb-0">
-        Better Ed : Education Reimagined
+        {activeTopic}
       </h1>
       
       <div className="flex flex-row gap-8 p-8 flex-grow">
@@ -324,8 +324,8 @@ export default function Home() {
             topic={activeTopic}
           />
 
-          <div className="w-full md:w-[480px] bg-white mt-auto md:mt-0 flex-shrink-0">
-            <ScrollArea ref={scrollAreaRef} className="h-[240px] md:h-[540px] p-6">
+          <div className="w-full md:w-[640px] bg-white mt-auto md:mt-0 flex-shrink-0">
+            <ScrollArea ref={scrollAreaRef} className="h-[300px] md:h-[540px] p-6">
               <div className="space-y-6">
                 <GeminiMessage 
                   text={TOPIC_PROMPTS[activeTopic]}
