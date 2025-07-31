@@ -8,7 +8,7 @@ import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import { initializeApp } from 'firebase/app';
 import { Button } from "@/components/ui/button";
 import { GeminiWebSocket } from './services/geminiWebSocket';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 
 // First, make sure Firebase is initialized
@@ -127,14 +127,8 @@ const GeminiMessage = ({ text, date, imageUrl }: { text: string, date?: Date, im
       <div className="rounded-lg bg-white border border-zinc-200 px-3 py-2 text-sm text-zinc-800">
         {text}
         {imageUrl && (
-          <div className="mt-4 relative w-full h-[200px]">
-            <Image 
-              src={imageUrl} 
-              alt="Soccer scenario" 
-              fill
-              className="rounded-lg object-contain"
-              priority
-            />
+          <div className="mt-4">
+            <img src={imageUrl} alt="Soccer scenario" className="rounded-lg max-w-full h-auto" />
           </div>
         )}
       </div>
@@ -143,6 +137,7 @@ const GeminiMessage = ({ text, date, imageUrl }: { text: string, date?: Date, im
 );
 
 export default function Home() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   
   // Get topic from URL or default to "Freefall and Projectile Motion"
@@ -188,14 +183,6 @@ export default function Home() {
     }
   }, []);
 
-  // Update page title based on active topic
-  useEffect(() => {
-    const title = document.querySelector('h1');
-    if (title) {
-      title.textContent = activeTopic;
-    }
-  }, [activeTopic]);
-
   // Define all the required handler functions
   const handleMessage = useCallback((text: string) => {
     console.log("Received message:", text);
@@ -230,7 +217,7 @@ export default function Home() {
       handlePlayingStateChange,
       handleAudioLevelChange,
       handleTranscription,
-      activeTopic 
+      activeTopic // Pass the current topic
     );
     webSocketRef.current.connect();
 
@@ -282,9 +269,16 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <h1 className="text-4xl font-bold text-zinc-800 p-8 pb-0">
-        {activeTopic}
-      </h1>
+      <div className="p-8 pb-0">
+        <Image
+          src="/better_ed_logo.png"
+          alt="Better Ed: Education Reimagined"
+          width={200}
+          height={50}
+          priority
+          className="h-auto"
+        />
+      </div>
       
       <div className="flex flex-row gap-8 p-8 flex-grow">
         {/* Navigation Sidebar */}
@@ -324,8 +318,8 @@ export default function Home() {
             topic={activeTopic}
           />
 
-          <div className="w-full md:w-[640px] bg-white mt-auto md:mt-0 flex-shrink-0">
-            <ScrollArea ref={scrollAreaRef} className="h-[300px] md:h-[540px] p-6">
+          <div className="w-full md:w-[480px] bg-white mt-auto md:mt-0 flex-shrink-0">
+            <ScrollArea ref={scrollAreaRef} className="h-[240px] md:h-[540px] p-6">
               <div className="space-y-6">
                 <GeminiMessage 
                   text={TOPIC_PROMPTS[activeTopic]}

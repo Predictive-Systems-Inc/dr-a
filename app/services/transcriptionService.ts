@@ -19,7 +19,7 @@ export class TranscriptionService {
             data: audioBase64
           }
         },
-        { text: "Please transcribe the spoken language to english or filipino in this audio accurately. Ignore any background noise or non-speech sounds. If no proper speech is detected, return empty string." },
+        { text: "Please transcribe the spoken language to english in this audio accurately. Ignore any background noise or non-speech sounds. If no proper speech is detected, return empty string." },
       ]);
 
       return result.response.text();

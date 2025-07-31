@@ -260,7 +260,7 @@ export default function CameraPreview({
         setOutputAudioLevel(level);
       },
       onTranscription,
-      topic 
+      topic as "Displacement and Velocity" | "Soccer" | "Acceleration" | "Newton's Laws of Motion" | "Freefall and Projectile Motion" | "Circular Motion" | undefined
     );
     geminiWsRef.current.connect();
 
@@ -269,12 +269,15 @@ export default function CameraPreview({
         clearInterval(imageIntervalRef.current);
         imageIntervalRef.current = null;
       }
-      cleanupWebSocket();
-      cleanupAudio();
-      setIsWebSocketReady(false);
-      setConnectionStatus('disconnected');
+      // Only cleanup if we're actually streaming
+      if (isStreaming) {
+        cleanupWebSocket();
+        cleanupAudio();
+        setIsWebSocketReady(false);
+        setConnectionStatus('disconnected');
+      }
     };
-  }, [isStreaming, onTranscription, cleanupWebSocket, cleanupAudio, topic, isAudioSetup, sendAudioData]);
+  }, [isStreaming, onTranscription, cleanupWebSocket, cleanupAudio, topic]);
 
   // Start image capture only after WebSocket is ready
   useEffect(() => {
