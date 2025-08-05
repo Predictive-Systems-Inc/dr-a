@@ -198,7 +198,7 @@ export default function Home() {
 
   const handleAudioLevelChange = useCallback((level: number) => {
     // Optional: Handle audio level changes if needed
-    console.log("Audio level:", level);
+    // console.log("Audio level:", level);
   }, []);
 
   const handleTranscription = useCallback((transcription: string, date: Date, isHuman: boolean) => {

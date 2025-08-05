@@ -1,10 +1,12 @@
 import { TranscriptionService } from './transcriptionService';
 import { pcmToWav } from '../utils/audioUtils';
 
-const MODEL = "models/gemini-2.0-flash-exp";
+const MODEL = "models/gemini-2.5-flash-live-preview";
 const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 const HOST = "generativelanguage.googleapis.com";
-const WS_URL = `wss://${HOST}/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${API_KEY}`;
+// const WS_URL = `wss://${HOST}/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${API_KEY}`;
+const WS_URL = `ws://localhost:8080/ws/psi.be.v0.gemma3n.GenerateContent`;
+
 
 const TOPIC_INSTRUCTIONS = {
   "Displacement and Velocity": {
@@ -100,7 +102,7 @@ export class GeminiWebSocket {
     this.onTranscriptionCallback = onTranscription;
     // Create AudioContext for playback
     this.audioContext = new AudioContext({
-      sampleRate: 24000  // Match the response audio rate
+      sampleRate: 16000  // Match the response audio rate
     });
     this.transcriptionService = new TranscriptionService();
     this.currentTopic = initialTopic;
@@ -189,7 +191,7 @@ export class GeminiWebSocket {
 
   sendMediaChunk(b64Data: string, mimeType: string) {
     if (!this.isConnected || !this.ws || !this.isSetupComplete) return;
-    // console.log("[Sending Media Chunk]:", b64Data, mimeType);
+    console.log("[Sending Media Chunk]:", mimeType);
 
     const message = {
       realtime_input: {
@@ -204,6 +206,23 @@ export class GeminiWebSocket {
       this.ws.send(JSON.stringify(message));
     } catch (error) {
       console.error("[WebSocket] Error sending media chunk:", error);
+    }
+  }
+
+  sendTurnComplete() {
+    if (!this.isConnected || !this.ws || !this.isSetupComplete) return;
+    console.log("[Sending Turn Complete]");
+
+    const message = {
+      realtime_input: {
+        turn_complete: true
+      }
+    };
+
+    try {
+      this.ws.send(JSON.stringify(message));
+    } catch (error) {
+      console.error("[WebSocket] Error sending turn complete:", error);
     }
   }
 
